@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Музыкальные альбомы</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+            background: #f4f6f9;
+            color: #222;
+        }
+
+        section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
+        input, select, button {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 8px 0 15px;
+            padding: 10px;
+        }
+
+        button {
+            background: #2855a6;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .success { color: #16723b; }
+        .error { color: #bd2525; }
+
+        .album {
+            border-top: 1px solid #ddd;
+            padding: 12px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Каталог музыкальных альбомов</h1>
+
+    {% if message %}
+        <p class="success">{{ message }}</p>
+    {% endif %}
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <section>
+        <h2>Добавить альбом</h2>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" name="save_album">
+                Сохранить альбом
+            </button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Загрузить файл</h2>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <label for="data_file">Выберите JSON- или XML-файл:</label>
+            <input
+                type="file"
+                id="data_file"
+                name="data_file"
+                accept=".json,.xml"
+                required
+            >
+
+            <button type="submit" name="upload_file">
+                Загрузить и проверить
+            </button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Сохранённые альбомы</h2>
+
+        {% if albums %}
+            {% for album in albums %}
+                <div class="album">
+                    <h3>{{ album.data.title }}</h3>
+                    <p>Исполнитель: {{ album.data.artist }}</p>
+                    <p>Год выпуска: {{ album.data.year }}</p>
+                    <p>Жанр: {{ album.data.genre }}</p>
+                    <p>Файл: {{ album.filename }} ({{ album.format }})</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>На сервере пока нет корректных файлов с альбомами.</p>
+        {% endif %}
+    </section>
+</body>
+</html>
