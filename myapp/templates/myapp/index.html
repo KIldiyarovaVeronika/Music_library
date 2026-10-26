@@ -91,22 +91,30 @@
         </form>
     </section>
 
-    <section>
-        <h2>Сохранённые альбомы</h2>
 
-        {% if albums %}
-            {% for album in albums %}
-                <div class="album">
-                    <h3>{{ album.data.title }}</h3>
+<section>
+    <h2>Сохранённые альбомы</h2>
+
+    {% if albums %}
+        {% for album in albums %}
+            <div class="album">
+                <h3>{{ album.filename }}</h3>
+                <p>Формат: {{ album.format }}</p>
+
+                {% if album.error %}
+                    <p class="error">{{ album.error }}</p>
+                {% else %}
+                    <p>Название: {{ album.data.title }}</p>
                     <p>Исполнитель: {{ album.data.artist }}</p>
                     <p>Год выпуска: {{ album.data.year }}</p>
                     <p>Жанр: {{ album.data.genre }}</p>
-                    <p>Файл: {{ album.filename }} ({{ album.format }})</p>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>На сервере пока нет корректных файлов с альбомами.</p>
-        {% endif %}
-    </section>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>На сервере пока нет файлов с альбомами.</p>
+    {% endif %}
+</section>
+
 </body>
 </html>
