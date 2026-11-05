@@ -1,7 +1,7 @@
 from datetime import date
 
 from django import forms
-
+#
 
 CURRENT_YEAR = date.today().year
 REQUIRED_FIELDS = ("title", "artist", "year", "genre")
