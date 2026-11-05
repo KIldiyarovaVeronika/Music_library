@@ -5,10 +5,12 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from django.conf import settings
-from django.shortcuts import render
+from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.http import require_POST
 
-from .forms import AlbumForm, validate_album, REQUIRED_FIELDS
-
+from .forms import AlbumForm, AlbumModelForm, validate_album, REQUIRED_FIELDS
+from .models import Album
 
 DATA_DIR = Path(settings.BASE_DIR) / "myapp" / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -90,7 +92,6 @@ def save_album(data, file_format):
     return filename
 
 
-   
 def index(request):
     message = ""
     error = ""
@@ -109,9 +110,38 @@ def index(request):
                 "genre": form.cleaned_data["genre"].strip(),
             }
 
-            save_album(data, form.cleaned_data["file_format"])
-            message = "Альбом успешно сохранён."
-            form = AlbumForm()
+            storage_type = form.cleaned_data["storage_type"]
+
+            if storage_type == "database":
+                duplicate = Album.objects.filter(
+                    title=data["title"],
+                    artist=data["artist"],
+                    year=data["year"],
+                    genre=data["genre"],
+                ).exists()
+
+                if duplicate:
+                    error = (
+                        "Такой альбом уже существует "
+                        "в базе данных."
+                    )
+                else:
+                    Album.objects.create(**data)
+                    message = (
+                        "Альбом успешно сохранён "
+                        "в базе данных."
+                    )
+
+                form = AlbumForm()
+
+            else:
+                save_album(
+                    data,
+                    form.cleaned_data["file_format"]
+                )
+
+                message = "Альбом успешно сохранён в файл."
+                form = AlbumForm()
 
     # Загрузка готового JSON- или XML-файла
     elif request.method == "POST" and "upload_file" in request.POST:
@@ -188,4 +218,80 @@ def index(request):
         "albums": albums,
         "message": message,
         "error": error,
+    })
+def search_albums(request):
+    query = request.GET.get("q", "").strip()
+
+    albums = Album.objects.filter(
+        title__icontains=query
+    ) | Album.objects.filter(
+        artist__icontains=query
+    ) | Album.objects.filter(
+        genre__icontains=query
+    )
+
+    results = []
+
+    for album in albums.distinct():
+        results.append({
+            "id": album.id,
+            "title": album.title,
+            "artist": album.artist,
+            "year": album.year,
+            "genre": album.genre,
+        })
+
+    return JsonResponse({"albums": results})
+
+
+def edit_album(request, album_id):
+    album = get_object_or_404(Album, id=album_id)
+
+    if request.method == "POST":
+        form = AlbumModelForm(
+            request.POST,
+            instance=album
+        )
+
+        if form.is_valid():
+            data = form.cleaned_data
+
+            duplicate = Album.objects.filter(
+                title=data["title"].strip(),
+                artist=data["artist"].strip(),
+                year=data["year"],
+                genre=data["genre"].strip(),
+            ).exclude(id=album.id).exists()
+
+            if duplicate:
+                form.add_error(
+                    None,
+                    "Такой альбом уже существует в базе данных."
+                )
+            else:
+                form.save()
+                return redirect("index")
+
+    else:
+        form = AlbumModelForm(instance=album)
+
+    return render(
+        request,
+        "myapp/edit_album.html",
+        {
+            "form": form,
+            "album": album,
+        }
+    )
+
+
+@require_POST
+def delete_album(request, album_id):
+    album = get_object_or_404(Album, id=album_id)
+
+    album.delete()
+
+    return JsonResponse({
+        "success": True,
+        "message": "Альбом успешно удалён."
     })

@@ -1,7 +1,7 @@
 from datetime import date
 
 from django import forms
-#
+from .models import Album
 
 CURRENT_YEAR = date.today().year
 REQUIRED_FIELDS = ("title", "artist", "year", "genre")
@@ -75,13 +75,22 @@ class AlbumForm(forms.Form):
         label="Жанр",
         max_length=80,
     )
+    storage_type = forms.ChoiceField(
+        label="Место сохранения",
+        choices=[
+            ("file", "Файл"),
+            ("database", "База данных SQLite"),
+        ],
+    )
+
     file_format = forms.ChoiceField(
-        label="Формат сохранения",
+        label="Формат файла",
         choices=[
             ("json", "JSON"),
             ("xml", "XML"),
         ],
     )
+
 
     def clean(self):
         cleaned_data = super().clean()
@@ -101,3 +110,55 @@ class AlbumForm(forms.Form):
                     raise forms.ValidationError(message)
 
         return cleaned_data
+
+class AlbumModelForm(forms.ModelForm):
+    class Meta:
+        model = Album
+        fields = ["title", "artist", "year", "genre"]
+
+        labels = {
+            "title": "Название альбома",
+            "artist": "Исполнитель",
+            "year": "Год выпуска",
+            "genre": "Жанр",
+        }
+
+    def clean_title(self):
+        title = self.cleaned_data["title"].strip()
+
+        if not title:
+            raise forms.ValidationError(
+                "Название альбома не должно быть пустым."
+            )
+
+        return title
+
+    def clean_artist(self):
+        artist = self.cleaned_data["artist"].strip()
+
+        if not artist:
+            raise forms.ValidationError(
+                "Исполнитель не должен быть пустым."
+            )
+
+        return artist
+
+    def clean_genre(self):
+        genre = self.cleaned_data["genre"].strip()
+
+        if not genre:
+            raise forms.ValidationError(
+                "Жанр не должен быть пустым."
+            )
+
+        return genre
+    
+    def clean_year(self):
+    year = self.cleaned_data["year"]
+
+    if not 1900 <= year <= CURRENT_YEAR:
+        raise forms.ValidationError(
+            f"Год выпуска должен быть от 1900 до {CURRENT_YEAR}."
+        )
+
+    return year

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Музыкальные альбомы</title>
@@ -92,29 +93,214 @@
     </section>
 
 
+
 <section>
     <h2>Сохранённые альбомы</h2>
 
-    {% if albums %}
-        {% for album in albums %}
-            <div class="album">
-                <h3>{{ album.filename }}</h3>
-                <p>Формат: {{ album.format }}</p>
+    <label for="source" class="form-label">
+        Источник данных:
+    </label>
 
-                {% if album.error %}
-                    <p class="error">{{ album.error }}</p>
-                {% else %}
-                    <p>Название: {{ album.data.title }}</p>
-                    <p>Исполнитель: {{ album.data.artist }}</p>
-                    <p>Год выпуска: {{ album.data.year }}</p>
-                    <p>Жанр: {{ album.data.genre }}</p>
-                {% endif %}
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>На сервере пока нет файлов с альбомами.</p>
-    {% endif %}
+    <select id="source" class="form-select">
+        <option value="files">JSON/XML-файлы</option>
+        <option value="database">База данных SQLite</option>
+    </select>
+
+    <!-- Отображение альбомов из файлов -->
+    <div id="file-albums">
+
+        {% if albums %}
+            {% for album in albums %}
+                <div class="album">
+                    <h3>{{ album.filename }}</h3>
+
+                    <p>Формат: {{ album.format }}</p>
+
+                    {% if album.error %}
+                        <p class="error">{{ album.error }}</p>
+                    {% else %}
+                        <p>Название: {{ album.data.title }}</p>
+                        <p>Исполнитель: {{ album.data.artist }}</p>
+                        <p>Год выпуска: {{ album.data.year }}</p>
+                        <p>Жанр: {{ album.data.genre }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>На сервере пока нет файлов с альбомами.</p>
+        {% endif %}
+
+    </div>
+
+    <!-- Отображение альбомов из SQLite -->
+    <div id="database-albums" style="display: none;">
+
+        <label for="search" class="form-label">
+            Поиск альбомов:
+        </label>
+
+        <input
+            type="text"
+            id="search"
+            class="form-control"
+            placeholder="Название, исполнитель или жанр"
+        >
+
+        <div id="album-results"></div>
+
+    </div>
 </section>
 
+
+<script>
+    const sourceSelect = document.getElementById("source");
+
+    const fileAlbums = document.getElementById("file-albums");
+    const databaseAlbums = document.getElementById("database-albums");
+
+    const searchInput = document.getElementById("search");
+    const albumResults = document.getElementById("album-results");
+
+
+    // Переключение источника данных
+    sourceSelect.addEventListener("change", function () {
+
+        if (this.value === "files") {
+            fileAlbums.style.display = "block";
+            databaseAlbums.style.display = "none";
+        }
+        else {
+            fileAlbums.style.display = "none";
+            databaseAlbums.style.display = "block";
+
+            loadAlbums(searchInput.value);
+        }
+
+    });
+
+
+    // AJAX-поиск при вводе текста
+    searchInput.addEventListener("input", function () {
+        loadAlbums(this.value);
+    });
+
+
+    // Получение альбомов из SQLite
+    function loadAlbums(query) {
+
+        fetch(`/search/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+
+                albumResults.innerHTML = "";
+
+                if (data.albums.length === 0) {
+                    albumResults.textContent = "Альбомы не найдены.";
+                    return;
+                }
+
+                data.albums.forEach(album => {
+
+                    const element = document.createElement("div");
+                    element.className = "album";
+
+                    const title = document.createElement("h3");
+                    title.textContent = album.title;
+
+                    const artist = document.createElement("p");
+                    artist.textContent = "Исполнитель: " + album.artist;
+
+                    const year = document.createElement("p");
+                    year.textContent = "Год выпуска: " + album.year;
+
+                    const genre = document.createElement("p");
+                    genre.textContent = "Жанр: " + album.genre;
+
+                    const editLink = document.createElement("a");
+                    editLink.href = `/edit/${album.id}/`;
+                    editLink.textContent = "Редактировать";
+                    editLink.className = "btn btn-primary me-2";
+
+                    const deleteButton = document.createElement("button");
+                    deleteButton.textContent = "Удалить";
+                    deleteButton.className = "btn btn-danger";
+
+                    deleteButton.addEventListener("click", function () {
+                        deleteAlbum(album.id);
+                    });
+
+                    element.appendChild(title);
+                    element.appendChild(artist);
+                    element.appendChild(year);
+                    element.appendChild(genre);
+                    element.appendChild(editLink);
+                    element.appendChild(deleteButton);
+
+                    albumResults.appendChild(element);
+
+                });
+
+            });
+
+    }
+
+
+    // Удаление альбома из SQLite
+    function deleteAlbum(id) {
+
+        if (!confirm("Вы действительно хотите удалить альбом?")) {
+            return;
+        }
+
+        fetch(`/delete/${id}/`, {
+            method: "POST",
+
+            headers: {
+                "X-CSRFToken": getCookie("csrftoken")
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+
+            if (data.success) {
+                loadAlbums(searchInput.value);
+            }
+
+        });
+
+    }
+
+
+    // Получение CSRF-токена
+    function getCookie(name) {
+
+        let cookieValue = null;
+
+        if (document.cookie && document.cookie !== "") {
+
+            const cookies = document.cookie.split(";");
+
+            for (let cookie of cookies) {
+
+                cookie = cookie.trim();
+
+                if (cookie.startsWith(name + "=")) {
+
+                    cookieValue = decodeURIComponent(
+                        cookie.substring(name.length + 1)
+                    );
+
+                    break;
+                }
+
+            }
+
+        }
+
+        return cookieValue;
+
+    }
+
+</script>
 </body>
 </html>

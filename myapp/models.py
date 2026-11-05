@@ -1,8 +1,5 @@
 from django.db import models
-from datetime import date
 
-
-CURRENT_YEAR = date.today().year
 
 
 class Album(models.Model):
