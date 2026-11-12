@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-0#v2kgbptz-3#e_hhfq__rz-51#f5l-@r58e_cetvw+=tdo+5_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["music-library.de1.netrun.io",]
 
 
 # Application definition
