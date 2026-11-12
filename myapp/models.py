@@ -21,7 +21,7 @@ class Album(models.Model):
         max_length=80,
         verbose_name="Жанр"
     )
-#запрещает сохранять в базе одинаковые запи
+#запрещает сохранять в базе одинаковые записи
     class Meta:
         verbose_name = "Музыкальный альбом"
         verbose_name_plural = "Музыкальные альбомы"

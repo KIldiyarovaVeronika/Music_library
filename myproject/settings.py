@@ -126,3 +126,7 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://music-library.de1.netrun.io",
+]
