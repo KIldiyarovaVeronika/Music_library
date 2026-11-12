@@ -21,7 +21,7 @@ class Album(models.Model):
         max_length=80,
         verbose_name="Жанр"
     )
-
+#запрещает сохранять в базе одинаковые запи
     class Meta:
         verbose_name = "Музыкальный альбом"
         verbose_name_plural = "Музыкальные альбомы"
@@ -32,6 +32,6 @@ class Album(models.Model):
                 name="unique_album"
             )
         ]
-
+# удобное текстовое представление
     def __str__(self):
         return f"{self.title} — {self.artist}"

@@ -75,6 +75,7 @@ class AlbumForm(forms.Form):
         label="Жанр",
         max_length=80,
     )
+    # добавлено поле
     storage_type = forms.ChoiceField(
         label="Место сохранения",
         choices=[
@@ -111,8 +112,9 @@ class AlbumForm(forms.Form):
 
         return cleaned_data
 
+# Форма редактирвания записей базы данных
 class AlbumModelForm(forms.ModelForm):
-    class Meta:
+    class Meta: #настройки формы
         model = Album
         fields = ["title", "artist", "year", "genre"]
 
@@ -154,11 +156,9 @@ class AlbumModelForm(forms.ModelForm):
         return genre
     
     def clean_year(self):
-    year = self.cleaned_data["year"]
+        year = self.cleaned_data["year"]
 
-    if not 1900 <= year <= CURRENT_YEAR:
-        raise forms.ValidationError(
-            f"Год выпуска должен быть от 1900 до {CURRENT_YEAR}."
-        )
+        if not 1900 <= year <= CURRENT_YEAR:
+            raise forms.ValidationError(f"Год выпуска должен быть от 1900 до {CURRENT_YEAR}.")
 
-    return year
+        return year

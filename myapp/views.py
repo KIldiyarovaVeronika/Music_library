@@ -109,7 +109,7 @@ def index(request):
                 "year": form.cleaned_data["year"],
                 "genre": form.cleaned_data["genre"].strip(),
             }
-
+# Теперь переже созранением приложение проверяет выбор пользователя
             storage_type = form.cleaned_data["storage_type"]
 
             if storage_type == "database":
@@ -219,6 +219,7 @@ def index(request):
         "message": message,
         "error": error,
     })
+
 def search_albums(request):
     query = request.GET.get("q", "").strip()
 
