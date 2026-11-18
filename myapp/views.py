@@ -109,7 +109,7 @@ def index(request):
                 "year": form.cleaned_data["year"],
                 "genre": form.cleaned_data["genre"].strip(),
             }
-# Теперь перед сохранением приложение проверяет выбор пользователя
+            #  выбор пользователя: база или файл
             storage_type = form.cleaned_data["storage_type"]
 
             if storage_type == "database":
@@ -121,29 +121,19 @@ def index(request):
                 ).exists()
 
                 if duplicate:
-                    error = (
-                        "Такой альбом уже существует "
-                        "в базе данных."
-                    )
+                    error = ("Такой альбом уже существует в базе данных.")
                 else:
                     Album.objects.create(**data)
-                    message = (
-                        "Альбом успешно сохранён "
-                        "в базе данных."
-                    )
+                    message = ("Альбом успешно сохранён в базе данных.")
 
                 form = AlbumForm()
 
             else:
-                save_album(
-                    data,
-                    form.cleaned_data["file_format"]
-                )
-
+                save_album(data, form.cleaned_data["file_format"])
                 message = "Альбом успешно сохранён в файл."
                 form = AlbumForm()
 
-    # Загрузка готового JSON- или XML-файла
+    # загрузка готового JSON-/XML-файла
     elif request.method == "POST" and "upload_file" in request.POST:
         uploaded = request.FILES.get("data_file")
 
@@ -187,7 +177,7 @@ def index(request):
                         "«Сохранённые альбомы»."
                     )
 
-    # Чтение всех файлов, включая некорректные
+    # чтение всех файлов, включая некорректные
     albums = []
 
     for path in sorted(DATA_DIR.iterdir()):
@@ -265,10 +255,7 @@ def edit_album(request, album_id):
             ).exclude(id=album.id).exists()
 
             if duplicate:
-                form.add_error(
-                    None,
-                    "Такой альбом уже существует в базе данных."
-                )
+                form.add_error(None,"Такой альбом уже существует в базе данных.")
             else:
                 form.save()
                 return redirect("index")
@@ -279,10 +266,7 @@ def edit_album(request, album_id):
     return render(
         request,
         "myapp/edit_album.html",
-        {
-            "form": form,
-            "album": album,
-        }
+        {"form": form,"album": album,}
     )
 
 
@@ -292,7 +276,4 @@ def delete_album(request, album_id):
 
     album.delete()
 
-    return JsonResponse({
-        "success": True,
-        "message": "Альбом успешно удалён."
-    })
+    return JsonResponse({"success": True,"message": "Альбом успешно удалён."})

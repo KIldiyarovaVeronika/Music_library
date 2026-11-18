@@ -75,7 +75,7 @@ class AlbumForm(forms.Form):
         label="Жанр",
         max_length=80,
     )
-    # добавлено поле
+    # поле выбора места сохранения
     storage_type = forms.ChoiceField(
         label="Место сохранения",
         choices=[
